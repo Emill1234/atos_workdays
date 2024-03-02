@@ -1,0 +1,195 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://momentjs.com/downloads/moment.js"></script>
+<style>
+    table {
+      font-family: arial, sans-serif;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    
+    td, th {
+      border: 1px solid #000000;
+      text-align: center;
+      padding: 10px;
+    }
+    
+    tr:nth-child(even) {
+      background-color: #dddddd;
+    }
+
+    .button {
+        display:inline-block;
+        height: 25px;
+        background: #696969;
+        padding: 10px;
+        text-align: center;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        line-height: 25px;
+        text-decoration: none;
+        margin-bottom:10px;
+    }
+
+</style>
+
+<!DOCTYPE html>
+<html>
+<body>
+    
+    <a href="" class="button" id="work">Afiseaza doar perioadele lucratoare</a>
+    <a href="" style="float:right;" class="button" id="free">Afiseaza doar perioadele libere</a>
+    <a href="" style="margin-left:27%;" class="button" id="all">Afiseaza toate perioadele</a>
+
+    <table id="zile">
+        <tr>
+            <th>Lucru/liber</th>
+            <th>Perioada</th>
+            <th>Interval orar</th>
+            <th>Zile</th>
+            <th>Zile sarbatori legale</th>
+        </tr>
+    </table>
+</body>
+</html>
+
+<script>
+    function getKeyByValue(object, value) {
+        return Object.keys(object).find(key => object[key] === value);
+    }
+    function getDayName(dateStr, locale)
+    {
+        var date = new Date(dateStr);
+        return date.toLocaleDateString(locale, { weekday: 'long' });        
+    }
+    var start = '2024-01-07';
+    var end = '2024-12-31';
+    var startTime = '19:00';
+    var endTime = '07:00';
+    var daysOfYear = [];
+    while(start <= end){
+        daysOfYear.push(start);
+        start = (moment(start, "YYYY-MM-DD").add(1, 'days')).format("YYYY-MM-DD");
+    }
+
+    var count = 0;
+    var workOrRest = 'work';
+    var url = window.location.href.split('?')[0];
+    $("#work").attr("href", url + '?show_days=working');
+    $("#free").attr("href", url + '?show_days=free');
+    $("#all").attr("href", url);
+
+    var holidays = ['2024-01-07', '2024-01-24', '2024-04-14', '2024-04-16', '2024-04-17', '2024-05-01', '2024-06-01', '2024-06-04', '2024-06-05', '2024-08-15', '2024-11-30', '2024-12-01',
+                '2024-12-25', '2024-12-26'];
+    var currentHolidays = [];
+
+    daysOfYear.forEach(dayOfYear => {
+        count++;
+        if(holidays.includes(dayOfYear) && workOrRest == 'work') {
+            currentHolidays.push(dayOfYear);
+        }
+        if(count == 1) {
+            firstDayForDayName = dayOfYear;
+            firstDay = moment(dayOfYear).format('DD.MM.YYYY');
+        } else if(count == 4) {
+            lastDayForDayName = dayOfYear;
+            lastDay = moment(dayOfYear).format('DD.MM.YYYY');
+        }
+        if (count % 4 == 0) {
+            if(workOrRest == 'work') {
+                workOrRest = 'rest';
+                var getParam = window.location.href;
+                if(getParam.includes('=')) {
+                    var getParam = window.location.href.split('?')[1];
+                    var getParamValue = getParam.split('=')[1];
+                }
+                if(typeof getParamValue === "undefined" || getParamValue == "working") {
+                    string = '<tr><td>Lucru</td>';
+                    string += '<td>' + firstDay + ' - ' + lastDay + '</td>';
+                    string += '<td>' + startTime + ' - ' + endTime + '</td>';
+                    string += '<td>' + getDayName(moment(firstDayForDayName).format('MM/DD/YYYY'), "ro-RO") + ' - ' + getDayName(moment(lastDayForDayName).format('MM/DD/YYYY'), "ro-RO") + '</td>';
+                    string += '<td>';
+                    if(currentHolidays.length != 0) {
+                        currentHolidays.forEach(holidayDate => {
+                            switch (holidayDate) {
+                                case '2024-01-07':
+                                    day = 'Sfantul Ioan Botezatorul';
+                                    break;
+                                case '2024-01-24': 
+                                    day = 'Unirea Principatelor Romane';
+                                    break;
+                                case '2024-04-14':
+                                    day = "Vinerea Mare";
+                                    break;
+                                case '2024-04-16':
+                                    day = "Paste - prima zi";
+                                    break;
+                                case '2024-04-17':
+                                    day = "Paste - a doua zi";
+                                    break;
+                                case '2024-05-01':
+                                    day = "Ziua Muncii";
+                                    break;
+                                case '2024-06-01':
+                                    day = "Ziua Copilului";
+                                    break;
+                                case '2024-06-04':
+                                    day = "Rusalii";
+                                    break;
+                                case '2024-06-05':
+                                    day = "A doua zi de rusalii";
+                                    break;
+                                case '2024-08-15':
+                                    day = "Adormirea Maicii Domnului";
+                                    break;
+                                case '2024-11-30':
+                                    day = "Sf. Andrei";
+                                    break;
+                                case '2024-12-01':
+                                    day = "Ziua Nationala a Romaniei";
+                                    break;
+                                case '2024-12-25':
+                                    day = "Craciun - prima zi";
+                                    break;
+                                case '2024-12-26':
+                                    day = "Craciun - a doua zi";
+                                    break;
+                            }
+                            string += moment(holidayDate).format('DD.MM.YYYY') + ' (' + day + ')<br>';
+                        });
+                        //$string = rtrim($string);
+                        //$string = rtrim($string, ',');
+                        currentHolidays = [];
+                    }
+                    string += '</td></tr>';
+                    $("#zile tbody").append(string); 
+                    //$string .= '<br><br>';
+                    endTimeAux = endTime;
+                    endTime = startTime;
+                    startTime = endTimeAux;
+                }
+            } else {
+                workOrRest = 'work';
+                var getParam = window.location.href;
+                if(getParam.includes('=')) {
+                    var getParam = window.location.href.split('?')[1];
+                    var getParamValue = getParam.split('=')[1];
+                }
+                if(typeof getParamValue === "undefined" || getParamValue == 'free') {
+                    string = '<tr><td>Liber</td>';
+                    string += '<td>' + firstDay + ' - ' + lastDay + '</td>';
+                    string += '<td></td>';
+                    string += '<td>' + getDayName(moment(firstDayForDayName).format('MM/DD/YYYY'), "ro-RO") + ' - ' + getDayName(moment(lastDayForDayName).format('MM/DD/YYYY'), "ro-RO") + '</td>';
+                    string += '<td></td>';
+                    string += '</tr>';
+                    $("#zile tbody").append(string); 
+                }
+                //$string .= 'intre <b> ' . $firstDay . '</b> si <b>' . $lastDay . '</b> (' . $romanianDays[date('l', strtotime($firstDay))] . ' - ' . $romanianDays[date('l', strtotime($lastDay))] . ') ai liber, ke norok <br><br>';
+            }
+            count = 0;
+            firstDay = lastDay = '';
+        }
+    });
+
+
+</script>
